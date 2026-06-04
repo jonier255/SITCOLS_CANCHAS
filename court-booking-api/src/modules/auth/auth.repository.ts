@@ -18,6 +18,7 @@ export const authRepository = {
     fullName: string
     phone?: string
     role?: Role
+    mustChangePassword?: boolean
   }) {
     return prisma.user.create({
       data: {
@@ -26,6 +27,7 @@ export const authRepository = {
         fullName: data.fullName,
         phone: data.phone,
         role: data.role ?? 'CLIENT',
+        mustChangePassword: data.mustChangePassword ?? false,
         provider: 'local',
       },
     })
@@ -36,6 +38,7 @@ export const authRepository = {
       where: { id: userId },
       data: {
         passwordHash,
+        mustChangePassword: false,
       },
     })
   },

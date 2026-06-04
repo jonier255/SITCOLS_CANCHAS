@@ -6,6 +6,7 @@ import {
   loginSchema,
   refreshTokenSchema,
   changePasswordSchema,
+  setPasswordSchema,
   createOwnerSchema,
   createStaffSchema,
 } from './auth.schema.js'
@@ -76,6 +77,16 @@ export const authController = {
     try {
       const dto = changePasswordSchema.parse(req.body)
       await authService.changePassword(req.user!.id, dto)
+      return ApiResponse.noContent(res)
+    } catch (err) {
+      return next(err)
+    }
+  },
+
+  async setPassword(req: Request, res: Response, next: NextFunction) {
+    try {
+      const dto = setPasswordSchema.parse(req.body)
+      await authService.setPassword(req.user!.id, dto)
       return ApiResponse.noContent(res)
     } catch (err) {
       return next(err)

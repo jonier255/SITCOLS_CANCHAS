@@ -47,6 +47,16 @@ export const changePasswordSchema = z.object({
     .regex(/[0-9]/, 'Debe contener al menos un número'),
 })
 
+export const setPasswordSchema = z.object({
+  temporaryPassword: z.string().min(1, 'La contraseña temporal es requerida'),
+  newPassword: z
+    .string()
+    .min(1, 'La nueva contraseña es requerida')
+    .min(8, 'Mínimo 8 caracteres')
+    .regex(/[A-Z]/, 'Debe contener al menos una mayúscula')
+    .regex(/[0-9]/, 'Debe contener al menos un número'),
+})
+
 export const createOwnerSchema = z.object({
   email: z.string().email('Email inválido').toLowerCase(),
   fullName: z.string().min(2).max(100),
@@ -65,5 +75,6 @@ export type RegisterDto = z.infer<typeof registerSchema>
 export type LoginDto = z.infer<typeof loginSchema>
 export type RefreshTokenDto = z.infer<typeof refreshTokenSchema>
 export type ChangePasswordDto = z.infer<typeof changePasswordSchema>
+export type SetPasswordDto = z.infer<typeof setPasswordSchema>
 export type CreateOwnerDto = z.infer<typeof createOwnerSchema>
 export type CreateStaffDto = z.infer<typeof createStaffSchema>

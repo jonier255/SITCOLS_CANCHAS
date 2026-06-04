@@ -267,6 +267,36 @@ router.post('/logout-all', authMiddleware, authController.logoutAll)
  *         description: Contrasena cambiada
  */
 router.patch('/change-password', authMiddleware, authController.changePassword)
+/**
+ * @swagger
+ * /auth/set-password:
+ *   patch:
+ *     tags: [Auth]
+ *     summary: Establecer contrasena temporal
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - temporaryPassword
+ *               - newPassword
+ *             properties:
+ *               temporaryPassword:
+ *                 type: string
+ *               newPassword:
+ *                 type: string
+ *           example:
+ *             temporaryPassword: TempPass1A
+ *             newPassword: NewPassw0rdA
+ *     responses:
+ *       204:
+ *         description: Contrasena establecida
+ */
+router.patch('/set-password', authMiddleware, authController.setPassword)
 
 /**
  * @swagger

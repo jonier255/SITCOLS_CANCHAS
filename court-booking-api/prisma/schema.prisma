@@ -21,6 +21,7 @@ model User {
   passwordHash     String?
   fullName         String
   avatarUrl        String?
+  mustChangePassword Boolean @default(false) @map("must_change_password")
   role             Role           @default(CLIENT)
   isActive         Boolean        @default(true)
   fcmToken         String?

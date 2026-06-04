@@ -7,6 +7,7 @@ import {
   RegisterDto,
   LoginDto,
   ChangePasswordDto,
+  SetPasswordDto,
   CreateOwnerDto,
   CreateStaffDto,
 } from './auth.schema.js'
@@ -53,7 +54,14 @@ function generateTemporaryPassword(): string {
 }
 
 function formatAuthResponse(
-  user: { id: string; email: string; fullName: string; role: import('@prisma/client').Role; avatarUrl: string | null },
+  user: {
+    id: string
+    email: string
+    fullName: string
+    role: import('@prisma/client').Role
+    avatarUrl: string | null
+    mustChangePassword?: boolean
+  },
   tokens: TokenPair,
 ): AuthResponse {
   return {
@@ -63,6 +71,7 @@ function formatAuthResponse(
       fullName: user.fullName,
       role: user.role,
       avatarUrl: user.avatarUrl,
+      mustChangePassword: Boolean(user.mustChangePassword),
     },
     tokens,
   }
@@ -110,6 +119,7 @@ export const authService = {
       phone: dto.phone,
       passwordHash,
       role: 'OWNER',
+      mustChangePassword: true,
     })
 
     return {
@@ -139,7 +149,7 @@ export const authService = {
     phone: dto.phone,
     passwordHash,
     role: 'STAFF',
-    //mustChangePassword: true,
+    mustChangePassword: true,
   })
  
     // Nota: la relación StaffMember con el venue se crea en el módulo venues/staff
@@ -235,6 +245,28 @@ export const authService = {
     await authRepository.deleteAllUserRefreshTokens(userId)
   },
 
+  async setPassword(userId: string, dto: SetPasswordDto): Promise<void> {
+    const user = await authRepository.findUserById(userId)
+    if (!user || !user.passwordHash) throw new NotFoundError('Usuario')
+
+    const mustChangePassword = (user as { mustChangePassword?: boolean }).mustChangePassword
+    if (!mustChangePassword) {
+      throw new ForbiddenError('No requiere cambio de contraseña')
+    }
+
+    const isValid = await bcrypt.compare(dto.temporaryPassword, user.passwordHash)
+    if (!isValid) throw new UnauthorizedError('La contraseña temporal es incorrecta')
+
+    if (dto.temporaryPassword === dto.newPassword) {
+      throw new ForbiddenError('La nueva contraseña debe ser diferente a la temporal')
+    }
+
+    const newHash = await bcrypt.hash(dto.newPassword, SALT_ROUNDS)
+    await authRepository.updatePassword(userId, newHash)
+
+    await authRepository.deleteAllUserRefreshTokens(userId)
+  },
+
   async logout(refreshToken: string): Promise<void> {
     await authRepository.deleteRefreshToken(refreshToken).catch(() => {})
   },
@@ -253,6 +285,9 @@ export const authService = {
       phone: user.phone,
       avatarUrl: user.avatarUrl,
       role: user.role,
+      mustChangePassword: Boolean(
+        (user as { mustChangePassword?: boolean }).mustChangePassword,
+      ),
       createdAt: user.createdAt,
     }
   },

@@ -21,7 +21,7 @@ export interface AuthResponse {
     fullName: string
     role: Role
     avatarUrl: string | null
-    //mustChangePassword: boolean 
+    mustChangePassword: boolean
   }
   tokens: TokenPair
 }
