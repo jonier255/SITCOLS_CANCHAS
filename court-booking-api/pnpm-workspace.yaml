@@ -1,6 +1,7 @@
 allowBuilds:
   '@prisma/client': set this to true or false
   '@prisma/engines': true
+  '@scarf/scarf': true
   esbuild: set this to true or false
   msgpackr-extract: set this to true or false
   prisma: true

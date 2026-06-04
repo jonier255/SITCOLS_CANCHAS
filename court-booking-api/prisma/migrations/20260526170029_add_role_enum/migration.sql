@@ -1,0 +1,2 @@
+-- CreateEnum
+CREATE TYPE "Role" AS ENUM ('CLIENT', 'STAFF', 'OWNER', 'SUPER_ADMIN');
