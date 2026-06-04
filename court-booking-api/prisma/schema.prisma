@@ -11,6 +11,303 @@ model TestUser {
   id        String   @id @default(uuid())
   email     String   @unique
   name      String?
-
   createdAt DateTime @default(now())
+}
+
+model User {
+  id               String         @id @default(cuid())
+  email            String         @unique
+  phone            String?
+  passwordHash     String?
+  fullName         String
+  avatarUrl        String?
+  mustChangePassword Boolean @default(false) @map("must_change_password")
+  role             Role           @default(CLIENT)
+  isActive         Boolean        @default(true)
+  fcmToken         String?
+  googleId         String?        @unique
+  provider         String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  bookings         Booking[]
+  notifications    Notification[]
+  refreshTokens    RefreshToken[]
+  staffMemberships StaffMember[]
+  ownedVenues      Venue[]        @relation("VenueOwner")
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model Venue {
+  id                     String          @id @default(cuid())
+  slug                   String          @unique
+  name                   String
+  description            String?
+  ownerId                String
+  department             String
+  city                   String
+  address                String
+  latitude               Float?
+  longitude              Float?
+  phone                  String?
+  email                  String?
+  website                String?
+  instagram              String?
+  facebook               String?
+  whatsapp               String?
+  isActive               Boolean         @default(true)
+  isVerified             Boolean         @default(false)
+  cancellationHoursLimit Int             @default(24)
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
+  bookings               Booking[]
+  courts                 Court[]
+  penaltyRules           PenaltyRule[]
+  staff                  StaffMember[]
+  images                 VenueImage[]
+  schedules              VenueSchedule[]
+  owner                  User            @relation("VenueOwner", fields: [ownerId], references: [id])
+
+  @@index([ownerId])
+  @@index([city, isActive])
+  @@map("venues")
+}
+
+model VenueImage {
+  id        String   @id @default(cuid())
+  venueId   String
+  url       String
+  key       String
+  isCover   Boolean  @default(false)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  venue     Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@map("venue_images")
+}
+
+model VenueSchedule {
+  id        String  @id @default(cuid())
+  venueId   String
+  dayOfWeek Int
+  openTime  String
+  closeTime String
+  isClosed  Boolean @default(false)
+  venue     Venue   @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@unique([venueId, dayOfWeek])
+  @@map("venue_schedules")
+}
+
+model StaffMember {
+  id        String   @id @default(cuid())
+  venueId   String
+  userId    String
+  role      Role     @default(STAFF)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  venue     Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@unique([venueId, userId])
+  @@index([userId])
+  @@map("staff_members")
+}
+
+model Court {
+  id          String          @id @default(cuid())
+  venueId     String
+  name        String
+  description String?
+  surface     CourtSurface    @default(SYNTHETIC)
+  sport       String
+  capacity    Int             @default(10)
+  status      CourtStatus     @default(AVAILABLE)
+  isActive    Boolean         @default(true)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  bookings    Booking[]
+  images      CourtImage[]
+  prices      CourtPrice[]
+  schedules   CourtSchedule[]
+  venue       Venue           @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@index([venueId, isActive])
+  @@index([venueId, status])
+  @@map("courts")
+}
+
+model CourtImage {
+  id        String   @id @default(cuid())
+  courtId   String
+  url       String
+  key       String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  court     Court    @relation(fields: [courtId], references: [id], onDelete: Cascade)
+
+  @@map("court_images")
+}
+
+model CourtPrice {
+  id           String @id @default(cuid())
+  courtId      String
+  label        String
+  pricePerHour Int
+  startTime    String
+  endTime      String
+  daysOfWeek   Int[]
+  court        Court  @relation(fields: [courtId], references: [id], onDelete: Cascade)
+
+  @@map("court_prices")
+}
+
+model CourtSchedule {
+  id        String    @id @default(cuid())
+  courtId   String
+  dayOfWeek Int?
+  date      DateTime?
+  openTime  String?
+  closeTime String?
+  isClosed  Boolean   @default(false)
+  note      String?
+  court     Court     @relation(fields: [courtId], references: [id], onDelete: Cascade)
+
+  @@map("court_schedules")
+}
+
+model Booking {
+  id                 String        @id @default(cuid())
+  venueId            String
+  courtId            String
+  userId             String
+  status             BookingStatus @default(PENDING)
+  date               DateTime
+  startTime          String
+  endTime            String
+  durationMinutes    Int
+  priceAtBooking     Int
+  currency           String        @default("COP")
+  notes              String?
+  internalNote       String?
+  cancelledAt        DateTime?
+  cancellationReason String?
+  cancelledBy        String?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  court              Court         @relation(fields: [courtId], references: [id])
+  user               User          @relation(fields: [userId], references: [id])
+  venue              Venue         @relation(fields: [venueId], references: [id])
+  penaltyFee         PenaltyFee?
+
+  @@index([venueId, status, date])
+  @@index([status])
+  @@index([userId, status])
+  @@index([venueId, date])
+  @@index([courtId, date])
+  @@index([userId])
+  @@map("bookings")
+}
+
+model PenaltyRule {
+  id             String      @id @default(cuid())
+  venueId        String
+  type           PenaltyType
+  isActive       Boolean     @default(true)
+  freeUntilHours Int?
+  description    String?
+  createdAt      DateTime    @default(now())
+  venue          Venue       @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@map("penalty_rules")
+}
+
+model PenaltyFee {
+  id        String    @id @default(cuid())
+  bookingId String    @unique
+  amount    Int
+  reason    String
+  isPaid    Boolean   @default(false)
+  paidAt    DateTime?
+  createdAt DateTime  @default(now())
+  booking   Booking   @relation(fields: [bookingId], references: [id])
+
+  @@map("penalty_fees")
+}
+
+model Notification {
+  id        String              @id @default(cuid())
+  userId    String
+  channel   NotificationChannel
+  status    NotificationStatus  @default(PENDING)
+  title     String
+  body      String
+  data      Json?
+  sentAt    DateTime?
+  createdAt DateTime            @default(now())
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("notifications")
+}
+
+enum Role {
+  CLIENT
+  STAFF
+  OWNER
+  SUPER_ADMIN
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
+}
+
+enum CourtStatus {
+  AVAILABLE
+  OCCUPIED
+  MAINTENANCE
+  CLOSED
+}
+
+enum CourtSurface {
+  GRASS
+  SYNTHETIC
+  CLAY
+  HARD
+  INDOOR
+}
+
+enum NotificationChannel {
+  EMAIL
+  PUSH
+  SMS
+  WHATSAPP
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+enum PenaltyType {
+  CANCELLATION_FEE
+  NO_SHOW_FEE
 }

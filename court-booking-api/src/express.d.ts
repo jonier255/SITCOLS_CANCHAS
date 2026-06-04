@@ -4,12 +4,13 @@
 declare namespace Express {
   interface Request {
     user?: {
-      userId:   string;
-      email:    string;
-      role:     string;
-      tenantId: string | null;
-      jti?:     string;
-      exp?:     number;
+      id: string
+      userId: string
+      email: string
+      role: string
+      tenantId: string | null
+      jti?: string
+      exp?: number
     };
     tenant?: {
       id:       string;
